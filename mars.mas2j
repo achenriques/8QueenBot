@@ -1,0 +1,19 @@
+// Implementation of the example described in chapter 2
+// of the Jason's manual
+
+MAS mars {
+
+    infrastructure: Centralised
+
+    environment: QueensEnv
+    
+    agents:
+        white jugador.asl [beliefs="playAs(0)"];
+
+        black jugador.asl [beliefs="playAs(1)"];
+
+        bloqueador;
+
+        //configurador;
+
+}

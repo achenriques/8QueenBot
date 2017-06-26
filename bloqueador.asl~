@@ -1,0 +1,40 @@
+// Agent colocator in project mars.mas2j
+
+/* Initial beliefs and rules */
+
+natural(X,R+1) :- X > 0 &
+        natural(X-1,R).
+natural(X,-1).
+
+bloquesActuales(0).	//Numero e bloques olocados
+
+/* Initial goals */
+
+!start.
+
+/* Plans */
+
++!start <- !colocarBloque.	//Empieza colocando un bloque Random
+
++queen(X,Y): size(T) & bloquesActuales(N) & N<(T/4)  <- 
+	.random(R);	
+	if(R>0.5){	//50 por ciento de posibilidades de un bloque por cada reina colocada.
+		!colocarBloque;
+	}.
+
++!colocarBloque: size(T) <- 
+	.random(Q);
+	.random(K);
+	!natural(Q*T,Q1);
+	!natural(K*T,K1);
+	!esPosible(Q1,K1).
+
++!natural(X, Y): natural(X,Y).	//Genera el numero natural proviniente del Random Generator (Funete del metodo de Internet).
+
++!esPosible(X,Y) : not queen(X,Y) & not block(X,Y) & bloquesActuales(N) <- // Prueba si es posible la colocacion del bloque
+	block(X,Y);
+	-+bloquesActuales(N+1).
+
++!esPosible(X,Y) <- !colocarBloque.
+
+

@@ -1,0 +1,165 @@
+// Agent jugador in project mars.mas2j
+
+/* Initial beliefs and rules */
+v1(0).
+v2(0).
+
+/* Initial goals */
+!start.
+
+/* Plans */
+
++!start : playAs(0) & size(T) <-  !generarLibres; queen(T/2-1,T/2-1).	// Empieza jugando el primer jugador ocupando una posición central en el tablero intentando amenazar el mayor número de posiciones.
++!start <- !generarLibres.
+
++player(N) : playAs(N) <-  .wait(1000); !colocarQueen(0,0); if(N==0){.print("Toca jugar blancas. ")}else{.print("Toca jugar negras")}. 
++player(N) <- .print("Fin Turno").
+
+//Al añadir una nueva reina se eliminan las percepciones de casillas libres correspondientes
++queen(X,Y) <- !eliminarLibres(X,Y).
+
++block(X,Y) <- !eliminarLibresB(X,Y).
+
+//Generar una base de conocimiento con las casillas libres
++!generarLibres: size(T)<-
+	for(.range(I,0,T-1))
+	{
+		for(.range(J,0,T-1))
+		{
+			+libre(J,I);
+		}
+	}.	
+
+// Intenta ocupar la primera posición libre. Si no es posible avanzo una columna hasta llegar al final.
++!colocarQueen(X,Y) : libre(X,Y) & not block(X,Y) <-
+	queen(X,Y).
+
+// Si llega a la última fila avanza a la siguiente fila. Si se comprueban todas las posiciones el jugador peirde.
++!colocarQueen(X,Y) : size(T) <-
+	if(X==T)
+	{
+		!colocarQueen(0,Y+1);
+	}
+	else
+	{
+		if(Y==T)
+		{
+			.print("Mission Complete");
+		}
+		else
+		{
+			!colocarQueen(X+1,Y);
+		}
+	}.
+
+//Eliminar las casillas ocupadas o amenazadas(filas, columnas y diagonales respectivamente). Aqui se ejerce el control de amenazadas.
++!eliminarLibres(X,Y): size(T)<-
+	-libre(X,Y);
+	for(.range(I,0,T-1))
+	{
+		/*if(block(I,Y))
+		{
+			!eliminarLibresB(I,Y);
+		}*/
+		-libre(I,Y);
+		for(.range(J,0,T-1))
+		{
+			/*if(block(X,J))
+			{
+				!eliminarLibresB(X,J);
+			}*/
+			-libre(X,J);
+			if((I+J == X+Y) | (I-J == X-Y))
+			{
+				/*if(block(I,J))
+				{
+					!eliminarLibresB(I,J);
+				}*/
+				-libre(I,J);
+			}
+		}
+	}.
+	
++!eliminarLibresB(X,Y): size(T)<-
+	-libre(X,Y);
+	for(.range(I,0,T-1))	//Para Vertical
+	{
+		if(queen(X,I) & I<Y)
+		{
+			for(.range(J,Y+1,T-1))
+			{
+				+libre(X,J);
+			}
+		}
+		if(queen(X,I) & I>Y)
+		{
+			for(.range(J,0,Y-1))
+			{
+				+libre(X,J);
+			}
+		}
+	}
+	
+	for(.range(I,0,T-1))	//Para Horizontal
+	{
+		if(queen(I,Y) & I<X)
+		{
+			for(.range(J,X+1,T-1))
+			{
+				+libre(J,Y);
+			}
+		}
+		if(queen(X,I) & I>X)
+		{
+			for(.range(J,0,X-1))
+			{
+				+libre(J,Y);
+			}
+		}
+	}
+	
+	for(.range(I,0,T-1))	//Para Diagonales
+	{
+		for(.range(J,0,T-1))
+		{
+			if((I+J == X+Y) & I<X) //Superior
+			{
+				-+v1(X);	-+v2(Y);
+				while(not v1(T-1) & not v2(T-1))	//Controlamos que las libres no se salgan del tablero
+				{
+					-+v1(X+1);	-+v2(Y+1);
+					+libre(K,L) & v1(K) & v2(L);
+				}
+			}
+			if((I+J == X+Y) & I>X) //Superior
+			{
+				-+v1(X);	-+v2(Y);
+				while(not v1(0) & not v1(0))	//Controlamos que las libres no se salgan del tablero
+				{
+					-+v1(X-1);	-+v2(Y-1);
+					+libre(K,L) & v1(K) & v2(L);	
+				}
+			}
+			if((I-J == X-Y) & I<X) //Inferior	//Controlamos que las libres no se salgan del tablero
+			{
+				-+v1(X);	-+v2(Y);
+				while(not v1(T-1) & not v2(0))
+				{
+					-+v1(X+1);	-+v2(Y-1);
+					+libre(K,L) & v1(K) & v2(L);	
+				}
+			}
+			if((I-J == X-Y) & I>X) //Inferior	//Controlamos que las libres no se salgan del tablero
+			{
+				-+v1(X);	-+v2(Y);
+				while(not v1(0) & not v2(T-1))
+				{
+					-+v1(X-1);	-+v2(Y+1);
+					+libre(K,L) & v1(K) & v2(L);	
+				}
+			}
+		}
+	}.
+
+
+	
